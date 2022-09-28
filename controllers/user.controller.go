@@ -5,6 +5,8 @@ import (
 	"context"
 	"net/http"
 
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -27,7 +29,7 @@ func InitUser(usercollection *mongo.Collection, ctx context.Context) UserControl
 
 func (userController *UserController) CreateUser(ctx *gin.Context) {
 	var user models.User
-	if err := ctx.ShouldBindJSON(&user); err != nil {
+	if err := ctx.ShouldBind(&user); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
@@ -43,7 +45,7 @@ func (userController *UserController) CreateUser(ctx *gin.Context) {
 		bson.E{Key: "gender", Value: user.Gender},
 		bson.E{Key: "email", Value: user.Email},
 		bson.E{Key: "phone", Value: user.Phone},
-		bson.E{Key: "create_at", Value: user.Create_At},
+		bson.E{Key: "create_at", Value: time.Now()},
 	}
 
 	_, err := userController.usercollection.InsertOne(userController.ctx, newUser)
@@ -51,6 +53,7 @@ func (userController *UserController) CreateUser(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadGateway, gin.H{"meaasge": err.Error()})
 		return
 	}
+
 	ctx.JSON(http.StatusOK, gin.H{"message": "Success"})
 }
 
@@ -102,7 +105,7 @@ func (userController *UserController) GetAll(ctx *gin.Context) {
 
 func (userController *UserController) UpdateUser(ctx *gin.Context) {
 	var user models.User
-	if err := ctx.ShouldBindJSON(&user); err != nil {
+	if err := ctx.ShouldBind(&user); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
@@ -118,7 +121,6 @@ func (userController *UserController) UpdateUser(ctx *gin.Context) {
 		bson.E{Key: "gender", Value: user.Gender},
 		bson.E{Key: "email", Value: user.Email},
 		bson.E{Key: "phone", Value: user.Phone},
-		bson.E{Key: "create_at", Value: user.Create_At},
 	}}}
 	result, err := userController.usercollection.UpdateOne(ctx, query, update)
 	if result.MatchedCount != 1 {

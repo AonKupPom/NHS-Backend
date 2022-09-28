@@ -1,10 +1,12 @@
 package main
 
 import (
-	"NHS-backend/controllers"
+	"NHS-backend/middleware"
+	"NHS-backend/router"
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -16,13 +18,6 @@ var (
 	ctx         context.Context
 	mongoclient *mongo.Client
 	err         error
-
-	usercollection *mongo.Collection
-	tentcollection *mongo.Collection
-
-	authcontroller controllers.AuthController
-	usercontroller controllers.UserController
-	tentcontroller controllers.TentController
 )
 
 func init() {
@@ -35,25 +30,16 @@ func init() {
 		log.Fatal(err)
 	}
 
-	fmt.Println("mongo connection established")
-
-	usercollection = mongoclient.Database("NHS-Database").Collection("users")
-	tentcollection = mongoclient.Database("NHS-Database").Collection("tents")
-
-	authcontroller = controllers.InitAuth(usercollection, ctx)
-	usercontroller = controllers.InitUser(usercollection, ctx)
-	tentcontroller = controllers.InitTent(tentcollection, ctx)
+	fmt.Println("mongo connection successfully")
 
 	server = gin.Default()
+	server.Use(middleware.CORSMiddleware())
 }
 
 func main() {
 	defer mongoclient.Disconnect(ctx)
 
-	basepath := server.Group("/api")
-	authcontroller.RegisterAuthRoutes(basepath)
-	usercontroller.RegisterUserRoutes(basepath)
-	tentcontroller.RegisterTentRoutes(basepath)
+	router.InitRoute(server, mongoclient, ctx)
 
-	log.Fatal(server.Run(":9090"))
+	log.Fatal(server.Run(os.Getenv("PORT")))
 }

@@ -25,15 +25,27 @@ func InitTent(tentcollection *mongo.Collection, ctx context.Context) TentControl
 
 func (tentController *TentController) CreateTent(ctx *gin.Context) {
 	var tent models.Tent
-	if err := ctx.ShouldBindJSON(&tent); err != nil {
+	if err := ctx.ShouldBind(&tent); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
-	_, err := tentController.tentcollection.InsertOne(tentController.ctx, tent)
+	newTent := bson.D{
+		bson.E{Key: "name", Value: tent.Name},
+		bson.E{Key: "size", Value: tent.Size},
+		bson.E{Key: "color", Value: tent.Color},
+		bson.E{Key: "price", Value: tent.Price},
+		bson.E{Key: "type", Value: tent.Type},
+		bson.E{Key: "shape", Value: tent.Shape},
+		bson.E{Key: "description", Value: tent.Description},
+		bson.E{Key: "image", Value: tent.Image},
+		bson.E{Key: "stock", Value: tent.Stock},
+	}
+	_, err := tentController.tentcollection.InsertOne(tentController.ctx, newTent)
 	if err != nil {
 		ctx.JSON(http.StatusBadGateway, gin.H{"meaasge": err.Error()})
 		return
 	}
+
 	ctx.JSON(http.StatusOK, gin.H{"message": "Success"})
 }
 
@@ -83,7 +95,7 @@ func (tentController *TentController) GetAll(ctx *gin.Context) {
 
 func (tentController *TentController) UpdateTent(ctx *gin.Context) {
 	var tent models.Tent
-	if err := ctx.ShouldBindJSON(&tent); err != nil {
+	if err := ctx.ShouldBind(&tent); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
@@ -129,9 +141,9 @@ func (tentController *TentController) DeleteTent(ctx *gin.Context) {
 
 func (tentController *TentController) RegisterTentRoutes(rg *gin.RouterGroup) {
 	tentroute := rg.Group("/tent")
-	tentroute.POST("/create", tentController.CreateTent)
+	tentroute.POST("/create", UploadFile, tentController.CreateTent)
 	tentroute.GET("/get/:id", tentController.GetTent)
 	tentroute.GET("/getAll", tentController.GetAll)
-	tentroute.PUT("/update/:id", tentController.UpdateTent)
+	tentroute.PUT("/update/:id", UploadFile, tentController.UpdateTent)
 	tentroute.DELETE("/delete/:id", tentController.DeleteTent)
 }
