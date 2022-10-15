@@ -55,13 +55,16 @@ func (authController *AuthController) Login(ctx *gin.Context) {
 		return
 	}
 
+	user.UserName = ""
+	user.Password = ""
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"_id": user.ID,
 		// "exp": time.Now().Add(time.Minute * 1).Unix(),
 	})
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET_KEY")))
 
-	ctx.JSON(http.StatusOK, gin.H{"token": tokenString})
+	ctx.JSON(http.StatusOK, gin.H{"token": tokenString, "user": user})
 }
 
 func (authController *AuthController) RegisterAuthRoutes(rg *gin.RouterGroup) {

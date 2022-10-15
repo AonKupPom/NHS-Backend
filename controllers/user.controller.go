@@ -74,7 +74,8 @@ func (userController *UserController) GetUser(ctx *gin.Context) {
 
 func (userController *UserController) GetAll(ctx *gin.Context) {
 	var users []*models.User
-	cursor, err := userController.usercollection.Find(ctx, bson.D{{}})
+	opts := options.Find().SetProjection(bson.D{{"userName", 0}, {"password", 0}})
+	cursor, err := userController.usercollection.Find(ctx, bson.D{{}}, opts)
 	if err != nil {
 		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
 		return
