@@ -42,7 +42,7 @@ func (tentController *TentController) CreateTent(ctx *gin.Context) {
 	}
 	_, err := tentController.tentcollection.InsertOne(tentController.ctx, newTent)
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"meaasge": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -56,7 +56,7 @@ func (tentController *TentController) GetTent(ctx *gin.Context) {
 	query := bson.D{bson.E{Key: "_id", Value: objectId}}
 	err := tentController.tentcollection.FindOne(ctx, query).Decode(&tent)
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"meaasge": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
 		return
 	}
 	ctx.JSON(http.StatusOK, tent)

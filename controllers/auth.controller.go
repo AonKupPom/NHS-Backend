@@ -43,12 +43,12 @@ func (authController *AuthController) Login(ctx *gin.Context) {
 	query := bson.D{bson.E{Key: "userName", Value: requestBody.UserName}}
 	err := authController.usercollection.FindOne(ctx, query).Decode(&user)
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"meaasge": "ไม่มีชื่อผู้ใช้นี้ในระบบ กรุณาตรวจสอบอีกครั้ง"})
+		ctx.JSON(http.StatusBadGateway, gin.H{"message": "* ไม่มีชื่อผู้ใช้นี้ในระบบ"})
 		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(requestBody.Password)); err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"meaasge": "รหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง"})
+		ctx.JSON(http.StatusBadGateway, gin.H{"message": "* รหัสผ่านไม่ถูกต้อง"})
 		return
 	}
 
@@ -83,7 +83,7 @@ func (authController *AuthController) GoogleLogin(ctx *gin.Context) {
 		}
 		insertUser, err := authController.usercollection.InsertOne(authController.ctx, newUser)
 		if err != nil {
-			ctx.JSON(http.StatusBadGateway, gin.H{"meaasge": err.Error()})
+			ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
 			return
 		}
 		var userData models.User
@@ -91,7 +91,7 @@ func (authController *AuthController) GoogleLogin(ctx *gin.Context) {
 		opts := options.FindOne().SetProjection(bson.D{{"userName", 0}, {"password", 0}})
 		fatal := authController.usercollection.FindOne(ctx, query, opts).Decode(&userData)
 		if fatal != nil {
-			ctx.JSON(http.StatusBadGateway, gin.H{"meaasge": err.Error()})
+			ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
 			return
 		}
 

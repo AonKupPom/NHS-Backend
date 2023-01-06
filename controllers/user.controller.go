@@ -50,7 +50,7 @@ func (userController *UserController) CreateUser(ctx *gin.Context) {
 
 	_, err := userController.usercollection.InsertOne(userController.ctx, newUser)
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"meaasge": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -65,7 +65,7 @@ func (userController *UserController) GetUser(ctx *gin.Context) {
 	query := bson.D{bson.E{Key: "_id", Value: objectId}}
 	err := userController.usercollection.FindOne(ctx, query, opts).Decode(&user)
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"meaasge": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
 		return
 	}
 
