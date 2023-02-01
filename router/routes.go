@@ -11,14 +11,21 @@ import (
 func InitRoute(server *gin.Engine, mongoclient *mongo.Client, ctx context.Context) {
 
 	usercollection := mongoclient.Database("NHS-Database").Collection("users")
-	tentcollection := mongoclient.Database("NHS-Database").Collection("tents")
+	productcollection := mongoclient.Database("NHS-Database").Collection("products")
+	productSellcollection := mongoclient.Database("NHS-Database").Collection("productSell")
+	productRentcollection := mongoclient.Database("NHS-Database").Collection("productRent")
 
 	authcontroller := controllers.InitAuth(usercollection, ctx)
 	usercontroller := controllers.InitUser(usercollection, ctx)
-	tentcontroller := controllers.InitTent(tentcollection, ctx)
+	productcontroller := controllers.InitProduct(productcollection, ctx)
+	productSellcontroller := controllers.InitProductSell(productSellcollection, ctx)
+	productRentcontroller := controllers.InitProductRent(productRentcollection, ctx)
 
 	basepath := server.Group("/api")
 	authcontroller.RegisterAuthRoutes(basepath)
 	usercontroller.RegisterUserRoutes(basepath)
-	tentcontroller.RegisterTentRoutes(basepath)
+	productcontroller.RegisterProductRoutes(basepath)
+	productSellcontroller.RegisterProductSellRoutes(basepath)
+	productRentcontroller.RegisterProductRentRoutes(basepath)
+
 }

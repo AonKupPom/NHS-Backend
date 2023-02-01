@@ -28,4 +28,5 @@ type User struct {
 	Phone         string             `form:"phone" json:"phone" bson:"phone"`
 	Create_At     time.Time          `form:"create_at" json:"create_at" bson:"create_at"`
 	Profile_Image string             `form:"profile_image" json:"profile_image" bson:"profile_image"`
+	Role          string             `form:"role" json:"role" bson:"role"`
 }

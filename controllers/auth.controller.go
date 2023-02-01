@@ -56,8 +56,8 @@ func (authController *AuthController) Login(ctx *gin.Context) {
 	user.Password = ""
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"_id": user.ID,
-		// "exp": time.Now().Add(time.Minute * 1).Unix(),
+		"_X2lk":     user.ID,                               //ชื่อ properties คือ _id แบบเข้ารหัส base64
+		"_ZXhwaXJl": time.Now().Add(time.Hour * 24).Unix(), //ชื่อ properties คือ _expire แบบเข้ารหัส base64
 	})
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET_KEY")))
 
@@ -88,7 +88,7 @@ func (authController *AuthController) GoogleLogin(ctx *gin.Context) {
 		}
 		var userData models.User
 		query := bson.D{bson.E{Key: "_id", Value: insertUser.InsertedID}}
-		opts := options.FindOne().SetProjection(bson.D{{"userName", 0}, {"password", 0}})
+		opts := options.FindOne().SetProjection(bson.D{{Key: "userName", Value: 0}, {Key: "password", Value: 0}})
 		fatal := authController.usercollection.FindOne(ctx, query, opts).Decode(&userData)
 		if fatal != nil {
 			ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
@@ -96,16 +96,16 @@ func (authController *AuthController) GoogleLogin(ctx *gin.Context) {
 		}
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-			"_id": userData.ID,
-			// "exp": time.Now().Add(time.Minute * 1).Unix(),
+			"_X2lk":     userData.ID,                           //ชื่อ properties คือ _id แบบเข้ารหัส base64
+			"_ZXhwaXJl": time.Now().Add(time.Hour * 24).Unix(), //ชื่อ properties คือ _expire แบบเข้ารหัส base64
 		})
 		tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET_KEY")))
 		ctx.JSON(http.StatusOK, gin.H{"token": tokenString, "user": userData})
 		return
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"_id": user.ID,
-		// "exp": time.Now().Add(time.Minute * 1).Unix(),
+		"_X2lk":     user.ID,                               //ชื่อ properties คือ _id แบบเข้ารหัส base64
+		"_ZXhwaXJl": time.Now().Add(time.Hour * 24).Unix(), //ชื่อ properties คือ _expire แบบเข้ารหัส base64
 	})
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET_KEY")))
 	ctx.JSON(http.StatusOK, gin.H{"token": tokenString, "user": user})
