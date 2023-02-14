@@ -66,6 +66,10 @@ func (userController *UserController) GetUser(ctx *gin.Context) {
 	query := bson.D{bson.E{Key: "_id", Value: objectId}}
 	err := userController.usercollection.FindOne(ctx, query, opts).Decode(&user) //Decode ใช้เพื่อแปลง cursor ให้เป็น bson object
 	if err != nil {
+		if err.Error() == "mongo: no documents in result" {
+			ctx.JSON(http.StatusOK, nil)
+			return
+		}
 		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
 		return
 	}
@@ -152,7 +156,7 @@ func (userController *UserController) DeleteUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "Success"})
 }
 
-func (userController *UserController) GetAllUserForDatatable(ctx *gin.Context) {
+func (userController *UserController) GetUserForDatatable(ctx *gin.Context) {
 	type RequestBody struct {
 		Start      int    `form:"start" json:"start" bson:"start"`
 		TableRange int    `form:"tableRange" json:"tableRange" bson:"tableRange"`
@@ -239,5 +243,5 @@ func (userController *UserController) RegisterUserRoutes(rg *gin.RouterGroup) {
 	userroute.GET("/getAll", userController.GetAll)
 	userroute.PUT("/update/:id", userController.UpdateUser)
 	userroute.DELETE("/delete/:id", userController.DeleteUser)
-	userroute.POST("/getAllForDatatable", userController.GetAllUserForDatatable)
+	userroute.POST("/getUserForDatatable", userController.GetUserForDatatable)
 }

@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -34,9 +35,11 @@ func init() {
 
 	server = gin.Default()
 	server.Use(middleware.CORSMiddleware())
+	server.Use(static.Serve("/uploads", static.LocalFile("./uploads", true)))
 }
 
 func main() {
+
 	defer mongoclient.Disconnect(ctx)
 
 	router.InitRoute(server, mongoclient, ctx)

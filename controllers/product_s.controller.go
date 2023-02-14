@@ -29,8 +29,9 @@ func (productSellController *ProductSellController) CreateProductSell(ctx *gin.C
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
+	product, _ := primitive.ObjectIDFromHex(productSell.Product)
 	newProductSell := bson.D{
-		bson.E{Key: "product", Value: productSell.Product},
+		bson.E{Key: "product", Value: product},
 		bson.E{Key: "price", Value: productSell.Price},
 	}
 	_, err := productSellController.productSellcollection.InsertOne(productSellController.ctx, newProductSell)
@@ -94,9 +95,10 @@ func (productSellController *ProductSellController) UpdateProductSell(ctx *gin.C
 	}
 	id := ctx.Param("id")
 	objectId, _ := primitive.ObjectIDFromHex(id)
+	product, _ := primitive.ObjectIDFromHex(productSell.Product)
 	filter := bson.D{bson.E{Key: "_id", Value: objectId}}
 	update := bson.D{bson.E{Key: "$set", Value: bson.D{
-		bson.E{Key: "product", Value: productSell.Product},
+		bson.E{Key: "product", Value: product},
 		bson.E{Key: "price", Value: productSell.Price},
 	}}}
 	result, err := productSellController.productSellcollection.UpdateOne(ctx, filter, update)

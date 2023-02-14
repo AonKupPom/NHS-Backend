@@ -14,12 +14,14 @@ func InitRoute(server *gin.Engine, mongoclient *mongo.Client, ctx context.Contex
 	productcollection := mongoclient.Database("NHS-Database").Collection("products")
 	productSellcollection := mongoclient.Database("NHS-Database").Collection("productSell")
 	productRentcollection := mongoclient.Database("NHS-Database").Collection("productRent")
+	productTypecollection := mongoclient.Database("NHS-Database").Collection("productType")
 
 	authcontroller := controllers.InitAuth(usercollection, ctx)
 	usercontroller := controllers.InitUser(usercollection, ctx)
 	productcontroller := controllers.InitProduct(productcollection, ctx)
 	productSellcontroller := controllers.InitProductSell(productSellcollection, ctx)
 	productRentcontroller := controllers.InitProductRent(productRentcollection, ctx)
+	productTypecontroller := controllers.InitProductType(productTypecollection, ctx)
 
 	basepath := server.Group("/api")
 	authcontroller.RegisterAuthRoutes(basepath)
@@ -27,5 +29,6 @@ func InitRoute(server *gin.Engine, mongoclient *mongo.Client, ctx context.Contex
 	productcontroller.RegisterProductRoutes(basepath)
 	productSellcontroller.RegisterProductSellRoutes(basepath)
 	productRentcontroller.RegisterProductRentRoutes(basepath)
+	productTypecontroller.RegisterProductTypeRoutes(basepath)
 
 }

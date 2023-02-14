@@ -29,8 +29,10 @@ func (productRentController *ProductRentController) CreateProductRent(ctx *gin.C
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
+
+	product, _ := primitive.ObjectIDFromHex(productRent.Product)
 	newProductRent := bson.D{
-		bson.E{Key: "product", Value: productRent.Product},
+		bson.E{Key: "product", Value: product},
 		bson.E{Key: "price", Value: productRent.Price},
 	}
 	_, err := productRentController.productRentcollection.InsertOne(productRentController.ctx, newProductRent)
@@ -96,9 +98,10 @@ func (productRentController *ProductRentController) UpdateProductRent(ctx *gin.C
 	}
 	id := ctx.Param("id")
 	objectId, _ := primitive.ObjectIDFromHex(id)
+	product, _ := primitive.ObjectIDFromHex(productRent.Product)
 	filter := bson.D{bson.E{Key: "_id", Value: objectId}}
 	update := bson.D{bson.E{Key: "$set", Value: bson.D{
-		bson.E{Key: "product", Value: productRent.Product},
+		bson.E{Key: "product", Value: product},
 		bson.E{Key: "price", Value: productRent.Price},
 	}}}
 	result, err := productRentController.productRentcollection.UpdateOne(ctx, filter, update)
@@ -165,7 +168,7 @@ func (productRentController *ProductRentController) GetLazyProductRent(ctx *gin.
 	cursor.Close(ctx)
 
 	if len(productRents) == 0 {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": "documents not found"})
+		ctx.JSON(http.StatusOK, nil)
 		return
 	}
 
