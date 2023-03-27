@@ -51,7 +51,7 @@ func (userController *UserController) CreateUser(ctx *gin.Context) {
 
 	_, err := userController.usercollection.InsertOne(userController.ctx, newUser)
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -70,7 +70,7 @@ func (userController *UserController) GetUser(ctx *gin.Context) {
 			ctx.JSON(http.StatusOK, nil)
 			return
 		}
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -82,21 +82,17 @@ func (userController *UserController) GetAll(ctx *gin.Context) {
 	opts := options.Find().SetProjection(bson.D{{Key: "userName", Value: 0}, {Key: "password", Value: 0}})
 	cursor, err := userController.usercollection.Find(ctx, bson.D{{}}, opts)
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
-	for cursor.Next(ctx) {
-		var user models.User
-		err := cursor.Decode(&user)
-		if err != nil {
-			ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
-			return
-		}
-		users = append(users, &user)
+
+	if err := cursor.All(ctx, &users); err != nil {
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
+		return
 	}
 
 	if err := cursor.Err(); err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 	cursor.Close(ctx)
@@ -134,7 +130,7 @@ func (userController *UserController) UpdateUser(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadGateway, gin.H{"message": "no matched document found for update"})
 	}
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"message": "Success"})
@@ -150,7 +146,7 @@ func (userController *UserController) DeleteUser(ctx *gin.Context) {
 		return
 	}
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"message": "Success"})
@@ -202,17 +198,17 @@ func (userController *UserController) GetUserForDatatable(ctx *gin.Context) {
 	cursor, err := userController.usercollection.Aggregate(ctx, mongo.Pipeline{facetStage, bson.D{{Key: "$unwind", Value: "$count"}}})
 
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 
 	if err := cursor.All(ctx, &users); err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 
 	if err := cursor.Err(); err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 	cursor.Close(ctx)

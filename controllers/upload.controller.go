@@ -17,6 +17,33 @@ func UploadFile(ctx *gin.Context) {
 	ctx.SaveUploadedFile(file, "./uploads/"+fileName)
 }
 
+func UploadMultipleFiles(ctx *gin.Context) {
+	form, _ := ctx.MultipartForm()
+	files := form.File["files"]
+
+	for _, file := range files {
+		ctx.SaveUploadedFile(file, "./uploads/"+file.Filename)
+	}
+}
+
+func UploadAndRemoveMultipleFiles(ctx *gin.Context) {
+	form, _ := ctx.MultipartForm()
+	files := form.File["files"]
+	filesDelete := ctx.Request.Form["filesDelete"]
+
+	for _, file := range files {
+		ctx.SaveUploadedFile(file, "./uploads/"+file.Filename)
+	}
+
+	for _, fileDelete := range filesDelete {
+		err_remove := os.Remove("./uploads/" + string(fileDelete))
+		if err_remove != nil {
+			log.Fatal(err_remove)
+			return
+		}
+	}
+}
+
 func UploadAndRemoveFile(ctx *gin.Context) {
 	file, err := ctx.FormFile("file")
 	fileName := ctx.PostForm("image")

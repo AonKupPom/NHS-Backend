@@ -24,7 +24,7 @@ func InitProductSell(productSellcollection *mongo.Collection, ctx context.Contex
 }
 
 func (productSellController *ProductSellController) CreateProductSell(ctx *gin.Context) {
-	var productSell models.Product_sell
+	var productSell models.ProductSell
 	if err := ctx.ShouldBind(&productSell); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
@@ -36,7 +36,7 @@ func (productSellController *ProductSellController) CreateProductSell(ctx *gin.C
 	}
 	_, err := productSellController.productSellcollection.InsertOne(productSellController.ctx, newProductSell)
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -44,37 +44,33 @@ func (productSellController *ProductSellController) CreateProductSell(ctx *gin.C
 }
 
 func (productSellController *ProductSellController) GetProductSell(ctx *gin.Context) {
-	var productSell models.Product_sell
+	var productSell models.ProductSell
 	id := ctx.Param("id")
 	objectId, _ := primitive.ObjectIDFromHex(id)
 	query := bson.D{bson.E{Key: "_id", Value: objectId}}
 	err := productSellController.productSellcollection.FindOne(ctx, query).Decode(&productSell)
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 	ctx.JSON(http.StatusOK, productSell)
 }
 
 func (productSellController *ProductSellController) GetAll(ctx *gin.Context) {
-	var productSells []*models.Product_sell
+	var productSells []*models.ProductSell
 	cursor, err := productSellController.productSellcollection.Find(ctx, bson.D{{}})
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
-	for cursor.Next(ctx) {
-		var productSell models.Product_sell
-		err := cursor.Decode(&productSell)
-		if err != nil {
-			ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
-			return
-		}
-		productSells = append(productSells, &productSell)
+
+	if err := cursor.All(ctx, &productSells); err != nil {
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
+		return
 	}
 
 	if err := cursor.Err(); err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 	cursor.Close(ctx)
@@ -88,7 +84,7 @@ func (productSellController *ProductSellController) GetAll(ctx *gin.Context) {
 }
 
 func (productSellController *ProductSellController) UpdateProductSell(ctx *gin.Context) {
-	var productSell models.Product_sell
+	var productSell models.ProductSell
 	if err := ctx.ShouldBind(&productSell); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
@@ -106,7 +102,7 @@ func (productSellController *ProductSellController) UpdateProductSell(ctx *gin.C
 		ctx.JSON(http.StatusBadGateway, gin.H{"message": "no matched document found for update"})
 	}
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"message": "Success"})
@@ -122,7 +118,7 @@ func (productSellController *ProductSellController) DeleteProductSell(ctx *gin.C
 		return
 	}
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"message": "Success"})

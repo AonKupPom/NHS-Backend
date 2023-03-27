@@ -24,7 +24,7 @@ func InitProductRent(productRentcollection *mongo.Collection, ctx context.Contex
 }
 
 func (productRentController *ProductRentController) CreateProductRent(ctx *gin.Context) {
-	var productRent models.Product_rent
+	var productRent models.ProductRent
 	if err := ctx.ShouldBind(&productRent); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
@@ -37,7 +37,7 @@ func (productRentController *ProductRentController) CreateProductRent(ctx *gin.C
 	}
 	_, err := productRentController.productRentcollection.InsertOne(productRentController.ctx, newProductRent)
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -45,13 +45,13 @@ func (productRentController *ProductRentController) CreateProductRent(ctx *gin.C
 }
 
 func (productRentController *ProductRentController) GetProductRent(ctx *gin.Context) {
-	var productRent models.Product_rent
+	var productRent models.ProductRent
 	id := ctx.Param("id")
 	objectId, _ := primitive.ObjectIDFromHex(id)
 	query := bson.D{bson.E{Key: "_id", Value: objectId}}
 	err := productRentController.productRentcollection.FindOne(ctx, query).Decode(&productRent)
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 	ctx.JSON(http.StatusOK, productRent)
@@ -67,17 +67,17 @@ func (productRentController *ProductRentController) GetAll(ctx *gin.Context) {
 	})
 
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 
 	if err := cursor.All(ctx, &productRents); err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 
 	if err := cursor.Err(); err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 	cursor.Close(ctx)
@@ -91,7 +91,7 @@ func (productRentController *ProductRentController) GetAll(ctx *gin.Context) {
 }
 
 func (productRentController *ProductRentController) UpdateProductRent(ctx *gin.Context) {
-	var productRent models.Product_rent
+	var productRent models.ProductRent
 	if err := ctx.ShouldBind(&productRent); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
@@ -109,7 +109,7 @@ func (productRentController *ProductRentController) UpdateProductRent(ctx *gin.C
 		ctx.JSON(http.StatusBadGateway, gin.H{"message": "no matched document found for update"})
 	}
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"message": "Success"})
@@ -125,7 +125,7 @@ func (productRentController *ProductRentController) DeleteProductRent(ctx *gin.C
 		return
 	}
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"message": "Success"})
@@ -152,17 +152,17 @@ func (productRentController *ProductRentController) GetLazyProductRent(ctx *gin.
 	})
 
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 
 	if err := cursor.All(ctx, &productRents); err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 
 	if err := cursor.Err(); err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 	cursor.Close(ctx)

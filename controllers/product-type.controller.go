@@ -35,7 +35,7 @@ func (productTypeController *ProductTypeController) CreateProductType(ctx *gin.C
 	}
 	_, err := productTypeController.productTypecollection.InsertOne(productTypeController.ctx, newProductType)
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -49,7 +49,7 @@ func (productTypeController *ProductTypeController) GetProductType(ctx *gin.Cont
 	query := bson.D{bson.E{Key: "_id", Value: objectId}}
 	err := productTypeController.productTypecollection.FindOne(ctx, query).Decode(&productType)
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 	ctx.JSON(http.StatusOK, productType)
@@ -59,21 +59,17 @@ func (productTypeController *ProductTypeController) GetAll(ctx *gin.Context) {
 	var productTypes []*models.ProductType
 	cursor, err := productTypeController.productTypecollection.Find(ctx, bson.D{{}})
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
-	for cursor.Next(ctx) {
-		var productType models.ProductType
-		err := cursor.Decode(&productType)
-		if err != nil {
-			ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
-			return
-		}
-		productTypes = append(productTypes, &productType)
+
+	if err := cursor.All(ctx, &productTypes); err != nil {
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
+		return
 	}
 
 	if err := cursor.Err(); err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 	cursor.Close(ctx)
@@ -104,7 +100,7 @@ func (productTypeController *ProductTypeController) UpdateProductType(ctx *gin.C
 		ctx.JSON(http.StatusBadGateway, gin.H{"message": "no matched document found for update"})
 	}
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"message": "Success"})
@@ -120,7 +116,7 @@ func (productTypeController *ProductTypeController) DeleteProductType(ctx *gin.C
 		return
 	}
 	if err != nil {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"message": "Success"})

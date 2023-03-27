@@ -83,7 +83,7 @@ func (authController *AuthController) GoogleLogin(ctx *gin.Context) {
 		}
 		insertUser, err := authController.usercollection.InsertOne(authController.ctx, newUser)
 		if err != nil {
-			ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+			ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 			return
 		}
 		var userData models.User
@@ -91,7 +91,7 @@ func (authController *AuthController) GoogleLogin(ctx *gin.Context) {
 		opts := options.FindOne().SetProjection(bson.D{{Key: "userName", Value: 0}, {Key: "password", Value: 0}})
 		fatal := authController.usercollection.FindOne(ctx, query, opts).Decode(&userData)
 		if fatal != nil {
-			ctx.JSON(http.StatusBadGateway, gin.H{"message": err.Error()})
+			ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 			return
 		}
 
