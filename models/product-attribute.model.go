@@ -12,7 +12,7 @@ type ProductAttribute struct {
 }
 
 type Size struct {
-	Width  float32 `form:"width" json:"width" bson:"width" binding:"required"`
-	Long   float32 `form:"long" json:"long" bson:"long" binding:"required"`
-	Height float32 `form:"height" json:"height" bson:"height" binding:"required"`
+	Width  float64 `form:"width" json:"width" bson:"width" binding:"required"`
+	Long   float64 `form:"long" json:"long" bson:"long" binding:"required"`
+	Height float64 `form:"height" json:"height" bson:"height" binding:"required"`
 }

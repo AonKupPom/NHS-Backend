@@ -5,7 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"os"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -17,13 +20,23 @@ import (
 type ProductController struct {
 	productcollection          *mongo.Collection
 	productAttributecollection *mongo.Collection
+	productRentcollection      *mongo.Collection
+	productSellcollection      *mongo.Collection
 	ctx                        context.Context
 }
 
-func InitProduct(productcollection *mongo.Collection, productAttributecollection *mongo.Collection, ctx context.Context) ProductController {
+func InitProduct(
+	productcollection *mongo.Collection,
+	productAttributecollection *mongo.Collection,
+	productRentcollection *mongo.Collection,
+	productSellcollection *mongo.Collection,
+	ctx context.Context,
+) ProductController {
 	return ProductController{
 		productcollection:          productcollection,
 		productAttributecollection: productAttributecollection,
+		productRentcollection:      productRentcollection,
+		productSellcollection:      productSellcollection,
 		ctx:                        ctx,
 	}
 }
@@ -112,6 +125,8 @@ func (productController *ProductController) CreateProduct(ctx *gin.Context) {
 		bson.E{Key: "type", Value: productType},
 		bson.E{Key: "description", Value: productDecode.Description},
 		bson.E{Key: "image", Value: productDecode.Image},
+		bson.E{Key: "enableRent", Value: false},
+		bson.E{Key: "enableSell", Value: false},
 	}
 	newProduct, err := productController.productcollection.InsertOne(productController.ctx, product)
 	if err != nil {
@@ -267,6 +282,33 @@ func (productController *ProductController) UpdateProduct(ctx *gin.Context) {
 		}
 	}
 
+	productAttributeDelete := ctx.Request.Form["productAttributeDelete"]
+	for _, productAttributesDelete := range productAttributeDelete {
+		productAttributesDeleteId, _ := primitive.ObjectIDFromHex(productAttributesDelete)
+		filter := bson.D{bson.E{Key: "_id", Value: productAttributesDeleteId}}
+		result, err := productController.productAttributecollection.DeleteOne(ctx, filter)
+		if result.DeletedCount != 1 {
+			ctx.JSON(http.StatusBadGateway, gin.H{"message": "no match productAttribute found for delete"})
+			return
+		}
+		if err != nil {
+			ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
+			return
+		}
+
+		productRentDelete, err := productController.productRentcollection.DeleteMany(ctx, bson.D{{Key: "productAttribute", Value: productAttributesDeleteId}})
+		if err != nil {
+			ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error(), "productRentDelete": productRentDelete})
+			return
+		}
+
+		productSellDelete, err := productController.productSellcollection.DeleteMany(ctx, bson.D{{Key: "product", Value: productAttributesDeleteId}})
+		if err != nil {
+			ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error(), "productSellDelete": productSellDelete})
+			return
+		}
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{"message": "Success"})
 }
 
@@ -276,14 +318,58 @@ func (productController *ProductController) DeleteProduct(ctx *gin.Context) {
 	filter := bson.D{bson.E{Key: "_id", Value: objectId}}
 	result, err := productController.productcollection.DeleteOne(ctx, filter)
 	if result.DeletedCount != 1 {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": "no match document foumd for dalete"})
+		ctx.JSON(http.StatusBadGateway, gin.H{"message": "no match product found for delete"})
 		return
 	}
 	if err != nil {
 		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"message": "Success"})
+	cursor, err := productController.productAttributecollection.Aggregate(ctx, mongo.Pipeline{
+		bson.D{{Key: "$match", Value: bson.D{{Key: "product", Value: objectId}}}},
+	})
+	if err != nil {
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
+		return
+	}
+
+	var productAttributes []models.ProductAttribute
+	if err := cursor.All(ctx, &productAttributes); err != nil {
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
+		return
+	}
+
+	for _, productAttributes := range productAttributes {
+		err_remove := os.Remove("./uploads/" + string(productAttributes.Image))
+		if err_remove != nil {
+			ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
+	productAttributeDelete, err := productController.productAttributecollection.DeleteMany(ctx, bson.D{{Key: "product", Value: objectId}})
+	if productAttributeDelete.DeletedCount == 0 {
+		ctx.JSON(http.StatusBadGateway, gin.H{"message": "no match productAttribute found for delete"})
+		return
+	}
+	if err != nil {
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
+		return
+	}
+
+	productRentDelete, err := productController.productRentcollection.DeleteMany(ctx, bson.D{{Key: "product", Value: objectId}})
+	if err != nil {
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error(), "productRentDelete": productRentDelete})
+		return
+	}
+
+	productSellDelete, err := productController.productSellcollection.DeleteMany(ctx, bson.D{{Key: "product", Value: objectId}})
+	if err != nil {
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error(), "productSellDelete": productSellDelete})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "success"})
 }
 
 func (productController *ProductController) GetProductForDatatable(ctx *gin.Context) {
@@ -397,6 +483,19 @@ func (productController *ProductController) GetWithProductAttribute(ctx *gin.Con
 }
 
 func (productController *ProductController) Test(ctx *gin.Context) {
+	existingVersion := []float64{0.2, 0.4, 0.7, 0.8, 1.2}
+	newVersionStr := "1.2"
+	newVersion, _ := strconv.ParseFloat(newVersionStr, 32)
+
+	isNewerVersion := true
+	for _, version := range existingVersion {
+		if newVersion <= version {
+			isNewerVersion = false
+			break
+		}
+	}
+
+	fmt.Println(isNewerVersion)
 	ctx.JSON(http.StatusOK, gin.H{"message": "success"})
 }
 
@@ -406,7 +505,7 @@ func (productController *ProductController) RegisterProductRoutes(rg *gin.Router
 	productroute.GET("/get/:id", productController.GetProduct)
 	productroute.GET("/getAll", productController.GetAll)
 	productroute.PUT("/update/:id", UploadAndRemoveMultipleFiles, productController.UpdateProduct)
-	productroute.DELETE("/delete/:id/:fileDelete", RemoveFile, productController.DeleteProduct)
+	productroute.DELETE("/delete/:id", productController.DeleteProduct)
 	productroute.POST("/getProductForDatatable", productController.GetProductForDatatable)
 	productroute.GET("/getWithProductAttribute/:id", productController.GetWithProductAttribute)
 	productroute.POST("/test", productController.Test)

@@ -142,7 +142,7 @@ func (userController *UserController) DeleteUser(ctx *gin.Context) {
 	query := bson.D{bson.E{Key: "_id", Value: objectId}}
 	result, err := userController.usercollection.DeleteOne(ctx, query)
 	if result.DeletedCount != 1 {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": "no match document foumd for dalete"})
+		ctx.JSON(http.StatusBadGateway, gin.H{"message": "no match document found for delete"})
 		return
 	}
 	if err != nil {

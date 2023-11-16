@@ -19,9 +19,9 @@ func InitRoute(server *gin.Engine, mongoclient *mongo.Client, ctx context.Contex
 
 	authcontroller := controllers.InitAuth(usercollection, ctx)
 	usercontroller := controllers.InitUser(usercollection, ctx)
-	productcontroller := controllers.InitProduct(productcollection, productAttributecollection, ctx)
+	productcontroller := controllers.InitProduct(productcollection, productAttributecollection, productRentcollection, productSellcollection, ctx)
 	productSellcontroller := controllers.InitProductSell(productSellcollection, ctx)
-	productRentcontroller := controllers.InitProductRent(productRentcollection, ctx)
+	productRentcontroller := controllers.InitProductRent(productRentcollection, productcollection, ctx)
 	productTypecontroller := controllers.InitProductType(productTypecollection, ctx)
 	productAttributecontroller := controllers.InitProductAttribute(productAttributecollection, ctx)
 

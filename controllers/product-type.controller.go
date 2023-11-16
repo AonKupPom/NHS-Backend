@@ -112,7 +112,7 @@ func (productTypeController *ProductTypeController) DeleteProductType(ctx *gin.C
 	filter := bson.D{bson.E{Key: "_id", Value: objectId}}
 	result, err := productTypeController.productTypecollection.DeleteOne(ctx, filter)
 	if result.DeletedCount != 1 {
-		ctx.JSON(http.StatusBadGateway, gin.H{"message": "no match document foumd for dalete"})
+		ctx.JSON(http.StatusBadGateway, gin.H{"message": "no match document found for delete"})
 		return
 	}
 	if err != nil {
